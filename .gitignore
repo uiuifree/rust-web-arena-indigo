@@ -1,0 +1,6 @@
+/target
+*.json
+*.csv
+
+.idea
+.env
