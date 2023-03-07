@@ -2,9 +2,10 @@
 name = "web-arena-indigo"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-keywords=["webarena", "web_arena"]
+authors = ["uiuifree"]
+description = "web arena indigo API"
+license = "MIT"
+keywords=["WebArena", "web_arena"]
 
 [dependencies]
 reqwest ={version="0.11.10",features=["json"]}
