@@ -1,8 +1,18 @@
 [package]
-name = "rust-web-arena-indigo"
+name = "web-arena-indigo"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords=["webarena", "web_arena"]
 
 [dependencies]
+reqwest ={version="0.11.10",features=["json"]}
+# Json
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_derive = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1.19.2", features = ["full"] }
+dotenv = "0.15.0"

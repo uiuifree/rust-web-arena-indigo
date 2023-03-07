@@ -4,3 +4,5 @@
 
 .idea
 .env
+autotest_ssh_id_rsa
+autotest_ssh_id_rsa.pub
