@@ -1,0 +1,130 @@
+# web-arena-indigo
+
+> Unofficial async Rust client crate for the WebARENA Indigo VPS API (the VPS service of
+> NTTPC Communications, Japan); a community project not affiliated with NTTPC. Crate
+> name: `web-arena-indigo`, library name: `web_arena_indigo`. Covers all 51 endpoints of
+> the official REST API: instances (VMs), SSH keys, API keys, firewalls, snapshots, and
+> DNS.
+
+Key facts for generating code with this crate:
+
+- Entry point: `WebArenaIndigoApi::new(client_id, client_secret)`; call
+  `api.update_access_token().await?` once before other calls, or inject an existing token
+  with `.with_access_token(token)`. `.with_base_url(url)` overrides the endpoint
+  (proxy / mock server).
+- All methods are `async` (use tokio or any executor; HTTP via reqwest) and return
+  `Result<T, WebArenaIndigoApiError>`. The error enum has `Connection(String)`,
+  `Status(u16, String)` (non-2xx, raw body), and `JsonParse(String)` (raw body).
+- API groups are reached through accessors on `WebArenaIndigoApi`: `api.instance()`,
+  `api.ssh()`, `api.api_key()`, `api.firewall()`, `api.snapshot()`, `api.dns()`.
+  Request/response types live in the module of the same name
+  (e.g. `web_arena_indigo::dns::ARecordRequest`).
+- `CreateInstanceRequest` is an enum: `Standard { ssh_key_id, region_id, os_id,
+  instance_plan, instance_name }`, `Windows { win_password, .. }`,
+  `Import { import_url, .. }`, `FromSnapshot { ssh_key_id, snapshot_id, .. }`.
+- `InstanceStatus::Destroy` deletes the instance; other variants are Start / Stop /
+  ForceStop / Reset.
+- The API's `sucessCode` (sic) response field is exposed as `success_code`.
+- The Indigo API gateway rate-limits at 2 requests/second (burst 1). The client
+  automatically paces requests (600 ms interval) and retries twice on 429; override
+  with `.with_request_interval(Duration)` (`Duration::ZERO` disables pacing). There
+  is also an account-level quota (~10 requests/minute observed); for long call
+  sequences use a larger interval such as `Duration::from_secs(7)`.
+- After `create_instance` the new instance rejects operations for a short while
+  ("Instance ID is invalid"); an assigned firewall template cannot be deleted while
+  its instance is active (error code F60009).
+- MSRV 1.86, edition 2024. License MIT.
+
+## Minimal example
+
+```rust
+use web_arena_indigo::WebArenaIndigoApi;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut api = WebArenaIndigoApi::new("CLIENT_ID", "CLIENT_SECRET");
+    api.update_access_token().await?;
+    for vm in api.instance().instance_list().await? {
+        println!("{} {} {:?}", vm.instance_name, vm.status, vm.ipaddress);
+    }
+    Ok(())
+}
+```
+
+## Full API surface
+
+### Instance (VM) — accessor `api.instance()`, types in module `web_arena_indigo::instance`
+
+- `instance_type_list() -> InstanceTypeListResponse` — `GET /webarenaIndigo/v1/vm/instancetypes`
+- `region_list(instance_type_id: u32) -> RegionListResponse` — `GET /webarenaIndigo/v1/vm/getregion`
+- `os_list(instance_type_id: u32) -> OsListResponse` — `GET /webarenaIndigo/v1/vm/oslist`
+- `instance_specification(instance_type_id: u32) -> InstanceSpecificationResponse` — `GET /webarenaIndigo/v1/vm/getinstancespec`
+- `create_instance(request: CreateInstanceRequest) -> CreateInstanceResponse` — `POST /webarenaIndigo/v1/vm/createinstance`
+- `instance_list() -> Vec<Instance>` — `GET /webarenaIndigo/v1/vm/getinstancelist`
+- `update_instance_status(instance_id: u32, status: InstanceStatus) -> UpdateInstanceStatusResponse` — `POST /webarenaIndigo/v1/vm/instance/statusupdate`
+
+### SSH Key — accessor `api.ssh()`, types in module `web_arena_indigo::ssh`
+
+- `ssh_key_list() -> SshKeyListResponse` — `GET /webarenaIndigo/v1/vm/sshkey`
+- `active_ssh_key_list() -> ActiveSshKeyListResponse` — `GET /webarenaIndigo/v1/vm/sshkey/active/status`
+- `create_ssh_key(name: &str, public_key: &str) -> CreateSshKeyResponse` — `POST /webarenaIndigo/v1/vm/sshkey`
+- `retrieve_ssh_key(ssh_key_id: u32) -> RetrieveSshKeyResponse` — `GET /webarenaIndigo/v1/vm/sshkey/{id}`
+- `update_ssh_key(ssh_key_id: u32, request: UpdateSshKeyRequest) -> UpdateSshKeyResponse` — `PUT /webarenaIndigo/v1/vm/sshkey/{id}`
+- `destroy_ssh_key(ssh_key_id: u32) -> DestroySshKeyResponse` — `DELETE /webarenaIndigo/v1/vm/sshkey/{id}`
+
+### API Key — accessor `api.api_key()`, types in module `web_arena_indigo::api_key`
+
+- `create_api_key() -> CreateApiKeyResponse` — `GET /webarenaIndigo/v1/auth/create/apikey`
+- `api_key_list() -> ApiKeyListResponse` — `GET /webarenaIndigo/v1/auth/apikey`
+- `destroy_api_key(api_key_id: u32) -> DestroyApiKeyResponse` — `DELETE /webarenaIndigo/v1/auth/apikey/{id}`
+
+### Firewall — accessor `api.firewall()`, types in module `web_arena_indigo::firewall`
+
+- `create_firewall(request: CreateFirewallRequest) -> FirewallTemplateResponse` — `POST /webarenaIndigo/v1/nw/createfirewall`
+- `firewall_list() -> Vec<Firewall>` — `GET /webarenaIndigo/v1/nw/getfirewalllist`
+- `retrieve_firewall(firewall_id: u32) -> Vec<FirewallTemplateRule>` — `GET /webarenaIndigo/v1/nw/gettemplate/{id}`
+- `update_firewall(request: UpdateFirewallRequest) -> FirewallTemplateResponse` — `PUT /webarenaIndigo/v1/nw/updatefirewall`
+- `assign_firewall(firewall_id: u32, instance_id: u32) -> FirewallOperationResponse` — `POST /webarenaIndigo/v1/nw/assign`
+- `destroy_firewall(firewall_id: u32) -> FirewallOperationResponse` — `DELETE /webarenaIndigo/v1/nw/deletefirewall/{id}`
+
+### Snapshot — accessor `api.snapshot()`, types in module `web_arena_indigo::snapshot`
+
+- `take_snapshot(name: &str, instance_id: u32, slot_num: u32) -> SnapshotStatusResponse` — `POST /webarenaIndigo/v1/disk/takesnapshot`
+- `snapshot_list(instance_id: u32) -> Vec<Snapshot>` — `GET /webarenaIndigo/v1/disk/snapshotlist/{instance_id}`
+- `retake_snapshot(instance_id: u32, snapshot_id: u32) -> SnapshotStatusResponse` — `POST /webarenaIndigo/v1/disk/retakesnapshot`
+- `restore_snapshot(instance_id: u32, snapshot_id: u32) -> SnapshotStatusResponse` — `POST /webarenaIndigo/v1/disk/restoresnapshot`
+- `destroy_snapshot(snapshot_id: u32) -> SnapshotStatusResponse` — `DELETE /webarenaIndigo/v1/disk/deletesnapshot/{id}`
+
+### DNS — accessor `api.dns()`, types in module `web_arena_indigo::dns`
+
+- `register_domain(domain_name: &str) -> RegisterDomainResponse` — `POST /webarenaIndigo/v1/dns/registerdomain`
+- `domain_list() -> Vec<DnsDomain>` — `GET /webarenaIndigo/v1/dns/getdomainlist`
+- `retrieve_domain(domain_id: u32) -> DnsDomain` — `GET /webarenaIndigo/v1/dns/getdomainrecord/{id}`
+- `cancel_domain(domain_id: u32) -> DnsOperationResponse` — `DELETE /webarenaIndigo/v1/dns/canceldomain/{id}`
+- `create_domain_verification_token(zone_id: u32, verify_type: DnsVerifyType) -> String` — `POST /webarenaIndigo/v1/dns/domainverificationtoken`
+- `cancel_domain_verification(domain_id: u32) -> DnsOperationResponse` — `DELETE /webarenaIndigo/v1/dns/canceldomainverification/{id}`
+- `verify_domain(domain_id: u32) -> DomainVerificationResponse` — `GET /webarenaIndigo/v1/dns/domainverification/{id}`
+- `domain_records(domain_id: u32) -> DomainRecordsResponse` — `GET /webarenaIndigo/v1/dns/editdomain/{id}`
+- `ttl_list() -> Vec<DnsTtl>` — `GET /webarenaIndigo/v1/dns/getttl`
+- `add_a_record(request: ARecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addARecord`
+- `update_a_record(request: ARecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateARecord`
+- `add_aaaa_record(request: AaaaRecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addAAAARecord`
+- `update_aaaa_record(request: AaaaRecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateAAAARecord`
+- `add_cname_record(request: CnameRecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addCNAMERecord`
+- `update_cname_record(request: CnameRecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateCNAMERecord`
+- `add_mx_record(request: MxRecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addMXRecord`
+- `update_mx_record(request: MxRecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateMXRecord`
+- `add_txt_record(request: TxtRecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addTXTRecord`
+- `update_txt_record(request: TxtRecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateTXTRecord`
+- `add_ns_record(request: NsRecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addNSRecord`
+- `update_ns_record(request: NsRecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateNSRecord`
+- `add_srv_record(request: SrvRecordRequest) -> DnsOperationResponse` — `POST /webarenaIndigo/v1/dns/addSRVRecord`
+- `update_srv_record(request: SrvRecordRequest) -> DnsOperationResponse` — `PUT /webarenaIndigo/v1/dns/updateSRVRecord`
+- `destroy_record(request: DeleteRecordRequest) -> DnsOperationResponse` — `DELETE /webarenaIndigo/v1/dns/deleteNSRecord`
+
+## Links
+
+- Crate documentation: https://docs.rs/web-arena-indigo
+- Repository: https://github.com/uiuifree/rust-web-arena-indigo
+- Official API reference: https://indigo.arena.ne.jp/userapi/
+- Runnable examples: https://github.com/uiuifree/rust-web-arena-indigo/tree/main/examples

@@ -1,205 +1,287 @@
-use serde_derive::{Deserialize, Serialize};
-use serde_json::{json};
-use crate::http::HttpClient;
-use crate::{IndigoApi, WebArenaIndigoApi, WebArenaIndigoApiError};
+//! Instance (VM) APIs.
 
+use crate::http::HttpClient;
+use crate::serde_util::opt_string_lenient;
+use crate::{WebArenaIndigoApi, WebArenaIndigoApiError};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 pub struct InstanceApi<'a> {
     indigo: &'a WebArenaIndigoApi,
 }
 
-impl<'a> IndigoApi<'a> for InstanceApi<'a> {
-    fn new(api: &'a WebArenaIndigoApi) -> Self {
-        InstanceApi {
-            indigo: api
-        }
-    }
-
-    fn indigo(&self) -> &WebArenaIndigoApi {
-        self.indigo
-    }
-}
-
-
 impl<'a> InstanceApi<'a> {
-    pub async fn instance_type_list(&self) -> Result<InstanceTypeListResponse, WebArenaIndigoApiError> {
-        Ok(
-            HttpClient::get(
-                self.indigo().access_token(),
-                "https://api.customer.jp/webarenaIndigo/v1/vm/instancetypes",
-            ).await?
-        )
+    pub(crate) fn new(api: &'a WebArenaIndigoApi) -> Self {
+        InstanceApi { indigo: api }
     }
-    pub async fn region_list(&self, instance_type_id: u32) -> Result<GetRegionListResponse, WebArenaIndigoApiError> {
-        Ok(
-            HttpClient::get(
-                self.indigo().access_token(),
-                format!("https://api.customer.jp/webarenaIndigo/v1/vm/getregion?instanceTypeId={}", instance_type_id).as_str(),
-            ).await?
-        )
-    }
-    pub async fn os_list(&self, instance_type_id: u32) -> Result<GetOsListResponse, WebArenaIndigoApiError> {
-        Ok(
-            HttpClient::get(
-                self.indigo().access_token(),
-                format!("https://api.customer.jp/webarenaIndigo/v1/vm/oslist?instanceTypeId={}", instance_type_id).as_str(),
-            ).await?
-        )
-    }
-    pub async fn instance_specification(&self, instance_type_id: u32) -> Result<GetInstanceSpecification, WebArenaIndigoApiError> {
-        Ok(
-            HttpClient::get(
-                self.indigo().access_token(),
-                format!("https://api.customer.jp/webarenaIndigo/v1/vm/getinstancespec?instanceTypeId={}", instance_type_id).as_str(),
-            ).await?
-        )
-    }
-    pub async fn create_instance(&self, request: RequestCreateInstance) -> Result<CreateInstanceResponse, WebArenaIndigoApiError> {
-        Ok(
-            HttpClient::post(
-                self.indigo().access_token(),
-                format!("https://api.customer.jp/webarenaIndigo/v1/vm/createinstance", ).as_str(),
-                request,
-            ).await?
-        )
-    }
-    pub async fn get_instance_list(&self) -> Result<Vec<Vms>, WebArenaIndigoApiError> {
-        Ok(
-            HttpClient::get(
-                self.indigo().access_token(),
-                format!("https://api.customer.jp/webarenaIndigo/v1/vm/getinstancelist", ).as_str(),
-            ).await?
-        )
-    }
-    pub async fn update_instance_status(&self, instance_id: u32, status: InstanceStatus) -> Result<UpdateInstanceStatusResponse, WebArenaIndigoApiError> {
-        println!("{}",json!({
-                    "instanceId":instance_id,
-                    "status":status,
-                }).to_string());
 
-        Ok(
-            HttpClient::post(
-                self.indigo().access_token(),
-                format!("https://api.customer.jp/webarenaIndigo/v1/vm/instance/statusupdate", ).as_str(),
-                json!({
-                    "instanceId":instance_id,
-                    "status":status,
-                }),
-            ).await?
+    /// `GET /webarenaIndigo/v1/vm/instancetypes`
+    pub async fn instance_type_list(
+        &self,
+    ) -> Result<InstanceTypeListResponse, WebArenaIndigoApiError> {
+        HttpClient::get(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self.indigo.endpoint("/webarenaIndigo/v1/vm/instancetypes"),
         )
+        .await
+    }
+
+    /// `GET /webarenaIndigo/v1/vm/getregion`
+    pub async fn region_list(
+        &self,
+        instance_type_id: u32,
+    ) -> Result<RegionListResponse, WebArenaIndigoApiError> {
+        HttpClient::get(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self.indigo.endpoint(&format!(
+                "/webarenaIndigo/v1/vm/getregion?instanceTypeId={}",
+                instance_type_id
+            )),
+        )
+        .await
+    }
+
+    /// `GET /webarenaIndigo/v1/vm/oslist`
+    pub async fn os_list(
+        &self,
+        instance_type_id: u32,
+    ) -> Result<OsListResponse, WebArenaIndigoApiError> {
+        HttpClient::get(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self.indigo.endpoint(&format!(
+                "/webarenaIndigo/v1/vm/oslist?instanceTypeId={}",
+                instance_type_id
+            )),
+        )
+        .await
+    }
+
+    /// `GET /webarenaIndigo/v1/vm/getinstancespec`
+    pub async fn instance_specification(
+        &self,
+        instance_type_id: u32,
+    ) -> Result<InstanceSpecificationResponse, WebArenaIndigoApiError> {
+        HttpClient::get(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self.indigo.endpoint(&format!(
+                "/webarenaIndigo/v1/vm/getinstancespec?instanceTypeId={}",
+                instance_type_id
+            )),
+        )
+        .await
+    }
+
+    /// `POST /webarenaIndigo/v1/vm/createinstance`
+    pub async fn create_instance(
+        &self,
+        request: CreateInstanceRequest,
+    ) -> Result<CreateInstanceResponse, WebArenaIndigoApiError> {
+        HttpClient::post(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self.indigo.endpoint("/webarenaIndigo/v1/vm/createinstance"),
+            &request,
+        )
+        .await
+    }
+
+    /// `GET /webarenaIndigo/v1/vm/getinstancelist`
+    pub async fn instance_list(&self) -> Result<Vec<Instance>, WebArenaIndigoApiError> {
+        HttpClient::get(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self
+                .indigo
+                .endpoint("/webarenaIndigo/v1/vm/getinstancelist"),
+        )
+        .await
+    }
+
+    /// `POST /webarenaIndigo/v1/vm/instance/statusupdate`
+    ///
+    /// [`InstanceStatus::Destroy`] deletes the instance.
+    pub async fn update_instance_status(
+        &self,
+        instance_id: u32,
+        status: InstanceStatus,
+    ) -> Result<UpdateInstanceStatusResponse, WebArenaIndigoApiError> {
+        HttpClient::post(
+            self.indigo.throttle(),
+            self.indigo.access_token(),
+            &self
+                .indigo
+                .endpoint("/webarenaIndigo/v1/vm/instance/statusupdate"),
+            &json!({
+                "instanceId": instance_id,
+                "status": status,
+            }),
+        )
+        .await
     }
 }
 
-
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceTypeListResponse {
-    success: bool,
-    total: u32,
+    pub success: bool,
+    pub total: u32,
     #[serde(rename = "instanceTypes")]
-    instance_types: Vec<InstanceType>,
+    pub instance_types: Vec<InstanceType>,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceType {
-    id: u32,
-    name: String,
-    display_name: String,
-    created_at: String,
-    updated_at: String,
+    pub id: u32,
+    pub name: String,
+    pub display_name: String,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct GetRegionListResponse {
-    success: bool,
-    total: u32,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionListResponse {
+    pub success: bool,
+    pub total: u32,
     #[serde(rename = "regionlist")]
-    region_list: Vec<Region>,
+    pub region_list: Vec<Region>,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Region {
-    id: u32,
-    name: String,
-    use_possible_date: String,
+    pub id: u32,
+    pub name: String,
+    pub use_possible_date: String,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct GetOsListResponse {
-    success: bool,
-    total: u32,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OsListResponse {
+    pub success: bool,
+    pub total: u32,
     #[serde(rename = "osCategory")]
-    os_category: Vec<OsCategory>,
+    pub os_category: Vec<OsCategory>,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsCategory {
-    id: u32,
-    name: String,
-    logo: String,
+    pub id: u32,
+    pub name: String,
+    pub logo: String,
     #[serde(rename = "osLists")]
-    os_lists: Vec<OsList>,
+    pub os_lists: Vec<OsList>,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsList {
-    id: u32,
-    #[serde(rename = "categoryId")]
-    category_id: u32,
-    name: String,
+    pub id: u32,
+    /// The live API sends `categoryid` although the documentation says
+    /// `categoryId`; both are accepted.
+    #[serde(rename = "categoryid", alias = "categoryId")]
+    pub category_id: u32,
+    /// Not documented, but returned by the live API (e.g. `"Ubuntu"`).
+    pub code: Option<String>,
+    pub name: String,
     #[serde(rename = "viewname")]
-    view_name: String,
+    pub view_name: String,
     #[serde(rename = "instancetype_id")]
-    instance_type_id: u32,
+    pub instance_type_id: u32,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct GetInstanceSpecification {
-    success: bool,
-    total: u32,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceSpecificationResponse {
+    pub success: bool,
+    pub total: u32,
     #[serde(rename = "speclist")]
-    spec_list: Vec<SpecList>,
+    pub spec_list: Vec<InstanceSpec>,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct SpecList {
-    id: u32,
-    name: String,
-    description: String,
-    use_possible_date: String,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceSpec {
+    pub id: u32,
+    pub name: String,
+    pub description: String,
+    pub use_possible_date: String,
     #[serde(rename = "instancetype_id")]
-    instance_type_id: u32,
-    created_at: String,
-    updated_at: String,
-    instance_type: InstanceType,
+    pub instance_type_id: u32,
+    pub created_at: String,
+    pub updated_at: String,
+    pub instance_type: InstanceType,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct RequestCreateInstance {
-    #[serde(rename = "sshKeyId")]
-    pub ssh_key_id: u32,
-    #[serde(rename = "regionId")]
-    pub region_id: u32,
-    #[serde(rename = "osId")]
-    pub os_id: u32,
-    #[serde(rename = "instancePlan")]
-    pub instance_plan: u32,
-    #[serde(rename = "instanceName")]
-    pub instance_name: String,
+/// Request body for [`InstanceApi::create_instance`]. One variant per
+/// documented boot method.
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
+pub enum CreateInstanceRequest {
+    /// Boot a Linux instance with an SSH key.
+    Standard {
+        #[serde(rename = "sshKeyId")]
+        ssh_key_id: u32,
+        #[serde(rename = "regionId")]
+        region_id: u32,
+        #[serde(rename = "osId")]
+        os_id: u32,
+        #[serde(rename = "instancePlan")]
+        instance_plan: u32,
+        #[serde(rename = "instanceName")]
+        instance_name: String,
+    },
+    /// Boot a Windows instance with an administrator password.
+    Windows {
+        #[serde(rename = "winPassword")]
+        win_password: String,
+        #[serde(rename = "regionId")]
+        region_id: u32,
+        #[serde(rename = "osId")]
+        os_id: u32,
+        #[serde(rename = "instancePlan")]
+        instance_plan: u32,
+        #[serde(rename = "instanceName")]
+        instance_name: String,
+    },
+    /// Boot from an image imported from a URL.
+    Import {
+        #[serde(rename = "importUrl")]
+        import_url: String,
+        #[serde(rename = "regionId")]
+        region_id: u32,
+        #[serde(rename = "osId")]
+        os_id: u32,
+        #[serde(rename = "instancePlan")]
+        instance_plan: u32,
+        #[serde(rename = "instanceName")]
+        instance_name: String,
+    },
+    /// Boot from an existing snapshot.
+    FromSnapshot {
+        #[serde(rename = "sshKeyId")]
+        ssh_key_id: u32,
+        #[serde(rename = "snapshotId")]
+        snapshot_id: u32,
+        #[serde(rename = "instancePlan")]
+        instance_plan: u32,
+        #[serde(rename = "instanceName")]
+        instance_name: String,
+    },
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateInstanceResponse {
-    success: bool,
-    message: String,
-    vms: Vms,
+    pub success: bool,
+    pub message: String,
+    pub vms: Instance,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Vms {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Instance {
     pub id: u32,
     pub instance_name: String,
     pub set_no: u32,
-    // pub // vps_kind: String, // number and string
+    /// The API returns this as either a number or a string.
+    #[serde(default, deserialize_with = "opt_string_lenient")]
+    pub vps_kind: Option<String>,
     pub sequence_id: u32,
     pub user_id: u32,
     pub service_id: String,
@@ -225,42 +307,43 @@ pub struct Vms {
     pub arpa_name: Option<String>,
     #[serde(rename = "arpadate")]
     pub arpa_date: u32,
-    pub ipaddress:Option<String>,
-    pub secondary_ip:Option<String>,
-    pub macaddress:Option<String>,
-    pub ipaddress_type:Option<String>,
+    pub ipaddress: Option<String>,
+    pub secondary_ip: Option<String>,
+    pub macaddress: Option<String>,
+    pub ipaddress_type: Option<String>,
     pub status_change_date: Option<InstanceDate>,
     pub updated_at: Option<InstanceDate>,
     pub vm_revert: u32,
-
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceDate {
-    date: String,
-    timezone_type: u32,
-    timezone: String,
+    pub date: String,
+    pub timezone_type: u32,
+    pub timezone: String,
 }
-#[derive(Default, Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub enum InstanceStatus {
     #[serde(rename = "start")]
     Start,
     #[serde(rename = "stop")]
-    #[default]
     Stop,
     #[serde(rename = "forcestop")]
     ForceStop,
     #[serde(rename = "reset")]
     Reset,
+    /// Deletes the instance.
     #[serde(rename = "destroy")]
     Destroy,
 }
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct UpdateInstanceStatusResponse{
-    success:bool,
-    message:String,
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInstanceStatusResponse {
+    pub success: bool,
+    pub message: String,
     #[serde(rename = "sucessCode")]
-    sucess_code:String,
+    pub success_code: String,
     #[serde(rename = "instanceStatus")]
-    instance_status:String,
+    pub instance_status: String,
 }

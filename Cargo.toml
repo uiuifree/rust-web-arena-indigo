@@ -1,19 +1,25 @@
 [package]
 name = "web-arena-indigo"
-version = "0.1.0"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.86"
 authors = ["uiuifree"]
-description = "web arena indigo API"
+description = "Unofficial async client for the WebARENA Indigo VPS API (NTTPC): instances, SSH keys, firewalls, snapshots, DNS"
 license = "MIT"
-keywords=["WebArena", "web_arena"]
+repository = "https://github.com/uiuifree/rust-web-arena-indigo"
+homepage = "https://github.com/uiuifree/rust-web-arena-indigo"
+documentation = "https://docs.rs/web-arena-indigo"
+readme = "README.md"
+keywords = ["webarena", "indigo", "vps", "nttpc", "api"]
+categories = ["api-bindings", "asynchronous"]
 
 [dependencies]
-reqwest ={version="0.11.10",features=["json"]}
-# Json
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["sync", "time"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_derive = "1.0"
 
 [dev-dependencies]
-tokio = { version = "1.19.2", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
 dotenv = "0.15.0"
+mockito = "1"
