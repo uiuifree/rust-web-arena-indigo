@@ -6,6 +6,7 @@ use crate::{WebArenaIndigoApi, WebArenaIndigoApiError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// Instance (VM) APIs, obtained via [`WebArenaIndigoApi::instance`](crate::WebArenaIndigoApi::instance).
 pub struct InstanceApi<'a> {
     indigo: &'a WebArenaIndigoApi,
 }
@@ -124,6 +125,7 @@ impl<'a> InstanceApi<'a> {
     }
 }
 
+/// Response of [`InstanceApi::instance_type_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceTypeListResponse {
     pub success: bool,
@@ -132,6 +134,7 @@ pub struct InstanceTypeListResponse {
     pub instance_types: Vec<InstanceType>,
 }
 
+/// An instance type (virtualization platform) entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceType {
     pub id: u32,
@@ -141,6 +144,7 @@ pub struct InstanceType {
     pub updated_at: String,
 }
 
+/// Response of [`InstanceApi::region_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegionListResponse {
     pub success: bool,
@@ -149,6 +153,7 @@ pub struct RegionListResponse {
     pub region_list: Vec<Region>,
 }
 
+/// A region entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Region {
     pub id: u32,
@@ -156,6 +161,7 @@ pub struct Region {
     pub use_possible_date: String,
 }
 
+/// Response of [`InstanceApi::os_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsListResponse {
     pub success: bool,
@@ -164,6 +170,7 @@ pub struct OsListResponse {
     pub os_category: Vec<OsCategory>,
 }
 
+/// An OS family and its installable versions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsCategory {
     pub id: u32,
@@ -173,6 +180,7 @@ pub struct OsCategory {
     pub os_lists: Vec<OsList>,
 }
 
+/// An installable OS entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsList {
     pub id: u32,
@@ -189,6 +197,7 @@ pub struct OsList {
     pub instance_type_id: u32,
 }
 
+/// Response of [`InstanceApi::instance_specification`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceSpecificationResponse {
     pub success: bool,
@@ -197,6 +206,7 @@ pub struct InstanceSpecificationResponse {
     pub spec_list: Vec<InstanceSpec>,
 }
 
+/// An instance plan (spec) entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceSpec {
     pub id: u32,
@@ -267,6 +277,7 @@ pub enum CreateInstanceRequest {
     },
 }
 
+/// Response of [`InstanceApi::create_instance`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateInstanceResponse {
     pub success: bool,
@@ -274,6 +285,7 @@ pub struct CreateInstanceResponse {
     pub vms: Instance,
 }
 
+/// An instance (VM), as returned by [`InstanceApi::instance_list`] and [`InstanceApi::create_instance`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Instance {
     pub id: u32,
@@ -316,6 +328,7 @@ pub struct Instance {
     pub vm_revert: u32,
 }
 
+/// A date value in the API's PHP-style serialization.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceDate {
     pub date: String,
@@ -323,6 +336,7 @@ pub struct InstanceDate {
     pub timezone: String,
 }
 
+/// Target status for [`InstanceApi::update_instance_status`].
 #[derive(Debug, Clone, Copy, Serialize)]
 pub enum InstanceStatus {
     #[serde(rename = "start")]
@@ -338,6 +352,7 @@ pub enum InstanceStatus {
     Destroy,
 }
 
+/// Response of [`InstanceApi::update_instance_status`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateInstanceStatusResponse {
     pub success: bool,

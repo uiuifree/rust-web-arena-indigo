@@ -6,6 +6,7 @@ use crate::{WebArenaIndigoApi, WebArenaIndigoApiError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// Snapshot APIs, obtained via [`WebArenaIndigoApi::snapshot`](crate::WebArenaIndigoApi::snapshot).
 pub struct SnapshotApi<'a> {
     indigo: &'a WebArenaIndigoApi,
 }
@@ -108,12 +109,14 @@ impl<'a> SnapshotApi<'a> {
     }
 }
 
+/// Response of the snapshot operations; `status` is `0` on success.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapshotStatusResponse {
     #[serde(rename = "STATUS")]
     pub status: i64,
 }
 
+/// A snapshot entry, as returned by [`SnapshotApi::snapshot_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
     pub id: u32,

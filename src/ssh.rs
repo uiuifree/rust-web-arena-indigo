@@ -5,6 +5,7 @@ use crate::{WebArenaIndigoApi, WebArenaIndigoApiError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// SSH key APIs, obtained via [`WebArenaIndigoApi::ssh`](crate::WebArenaIndigoApi::ssh).
 pub struct SshApi<'a> {
     indigo: &'a WebArenaIndigoApi,
 }
@@ -104,6 +105,7 @@ impl<'a> SshApi<'a> {
     }
 }
 
+/// Response of [`SshApi::ssh_key_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SshKeyListResponse {
     pub success: bool,
@@ -112,6 +114,7 @@ pub struct SshKeyListResponse {
     pub ssh_keys: Vec<SshKey>,
 }
 
+/// A registered SSH public key.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SshKey {
     pub id: u32,
@@ -125,6 +128,7 @@ pub struct SshKey {
     pub updated_at: String,
 }
 
+/// Response of [`SshApi::active_ssh_key_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActiveSshKeyListResponse {
     pub success: bool,
@@ -133,6 +137,7 @@ pub struct ActiveSshKeyListResponse {
     pub ssh_keys: Vec<SshKey>,
 }
 
+/// Response of [`SshApi::create_ssh_key`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateSshKeyResponse {
     pub success: bool,
@@ -141,6 +146,7 @@ pub struct CreateSshKeyResponse {
     pub ssh_key: SshKey,
 }
 
+/// Response of [`SshApi::retrieve_ssh_key`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetrieveSshKeyResponse {
     pub success: bool,
@@ -148,12 +154,14 @@ pub struct RetrieveSshKeyResponse {
     pub ssh_key: Vec<SshKey>,
 }
 
+/// Response of [`SshApi::update_ssh_key`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateSshKeyResponse {
     pub success: bool,
     pub message: String,
 }
 
+/// Request body for [`SshApi::update_ssh_key`].
 #[derive(Debug, Clone, Serialize)]
 pub struct UpdateSshKeyRequest {
     #[serde(rename = "sshName")]
@@ -164,6 +172,7 @@ pub struct UpdateSshKeyRequest {
     pub ssh_key_status: SshKeyStatus,
 }
 
+/// SSH key status, serialized as `ACTIVE` / `DEACTIVE`.
 #[derive(Debug, Clone, Copy, Default, Serialize)]
 pub enum SshKeyStatus {
     #[default]
@@ -173,6 +182,7 @@ pub enum SshKeyStatus {
     Deactive,
 }
 
+/// Response of [`SshApi::destroy_ssh_key`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DestroySshKeyResponse {
     pub success: bool,

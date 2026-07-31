@@ -6,6 +6,7 @@ use crate::{WebArenaIndigoApi, WebArenaIndigoApiError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// Firewall APIs, obtained via [`WebArenaIndigoApi::firewall`](crate::WebArenaIndigoApi::firewall).
 pub struct FirewallApi<'a> {
     indigo: &'a WebArenaIndigoApi,
 }
@@ -106,6 +107,7 @@ impl<'a> FirewallApi<'a> {
     }
 }
 
+/// Request body for [`FirewallApi::create_firewall`].
 #[derive(Debug, Clone, Serialize)]
 pub struct CreateFirewallRequest {
     pub name: String,
@@ -115,6 +117,7 @@ pub struct CreateFirewallRequest {
     pub instances: Vec<u32>,
 }
 
+/// Request body for [`FirewallApi::update_firewall`].
 #[derive(Debug, Clone, Serialize)]
 pub struct UpdateFirewallRequest {
     #[serde(rename = "templateid", serialize_with = "u32_as_string")]
@@ -126,6 +129,7 @@ pub struct UpdateFirewallRequest {
     pub instances: Vec<u32>,
 }
 
+/// A single allow rule of a firewall template.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FirewallRule {
     #[serde(rename = "type")]
@@ -135,6 +139,7 @@ pub struct FirewallRule {
     pub source: String,
 }
 
+/// Response of [`FirewallApi::create_firewall`] and [`FirewallApi::update_firewall`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FirewallTemplateResponse {
     pub success: bool,
@@ -147,6 +152,7 @@ pub struct FirewallTemplateResponse {
     pub firewall_id: u32,
 }
 
+/// A firewall template entry, as returned by [`FirewallApi::firewall_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Firewall {
     pub id: u32,
@@ -158,6 +164,7 @@ pub struct Firewall {
     pub updated_at: String,
 }
 
+/// A rule of a template, as returned by [`FirewallApi::retrieve_firewall`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FirewallTemplateRule {
     pub id: u32,
@@ -170,6 +177,7 @@ pub struct FirewallTemplateRule {
     pub source: String,
 }
 
+/// Response of [`FirewallApi::assign_firewall`] and [`FirewallApi::destroy_firewall`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FirewallOperationResponse {
     pub success: bool,

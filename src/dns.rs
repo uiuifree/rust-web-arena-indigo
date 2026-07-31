@@ -6,6 +6,7 @@ use crate::{WebArenaIndigoApi, WebArenaIndigoApiError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// DNS APIs, obtained via [`WebArenaIndigoApi::dns`](crate::WebArenaIndigoApi::dns).
 pub struct DnsApi<'a> {
     indigo: &'a WebArenaIndigoApi,
 }
@@ -326,6 +327,7 @@ impl<'a> DnsApi<'a> {
     }
 }
 
+/// Response of [`DnsApi::register_domain`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegisterDomainResponse {
     pub success: bool,
@@ -336,6 +338,7 @@ pub struct RegisterDomainResponse {
     pub zone_id: u32,
 }
 
+/// A registered DNS zone. `zone_id` stays `0` until the domain is verified.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnsDomain {
     pub id: u32,
@@ -352,6 +355,7 @@ pub struct DnsDomain {
     pub deleted_at: Option<String>,
 }
 
+/// Response of the DNS record operations and domain cancellations.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnsOperationResponse {
     pub success: bool,
@@ -360,6 +364,7 @@ pub struct DnsOperationResponse {
     pub success_code: String,
 }
 
+/// Response of [`DnsApi::verify_domain`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DomainVerificationResponse {
     pub success: bool,
@@ -373,6 +378,7 @@ pub struct DomainVerificationResponse {
     pub verify_type: String,
 }
 
+/// Response of [`DnsApi::domain_records`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DomainRecordsResponse {
     pub zone_records: Vec<ZoneRecord>,
@@ -390,6 +396,7 @@ pub struct ZoneRecord {
     pub record_type: String,
 }
 
+/// A selectable TTL preset, as returned by [`DnsApi::ttl_list`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnsTtl {
     pub id: u32,
@@ -397,6 +404,7 @@ pub struct DnsTtl {
     pub value: u32,
 }
 
+/// Domain-ownership verification method.
 #[derive(Debug, Clone, Copy, Serialize)]
 pub enum DnsVerifyType {
     #[serde(rename = "TXT")]
@@ -405,6 +413,7 @@ pub enum DnsVerifyType {
     Ns,
 }
 
+/// DNS record type, used by [`DnsApi::destroy_record`].
 #[derive(Debug, Clone, Copy, Serialize)]
 pub enum DnsRecordType {
     A,
@@ -422,6 +431,7 @@ pub enum DnsRecordType {
     Srv,
 }
 
+/// Request body for [`DnsApi::add_a_record`] / [`DnsApi::update_a_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct ARecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -433,6 +443,7 @@ pub struct ARecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::add_aaaa_record`] / [`DnsApi::update_aaaa_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct AaaaRecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -444,6 +455,7 @@ pub struct AaaaRecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::add_cname_record`] / [`DnsApi::update_cname_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct CnameRecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -455,6 +467,7 @@ pub struct CnameRecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::add_mx_record`] / [`DnsApi::update_mx_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct MxRecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -468,6 +481,7 @@ pub struct MxRecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::add_txt_record`] / [`DnsApi::update_txt_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct TxtRecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -479,6 +493,7 @@ pub struct TxtRecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::add_ns_record`] / [`DnsApi::update_ns_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct NsRecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -490,6 +505,7 @@ pub struct NsRecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::add_srv_record`] / [`DnsApi::update_srv_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct SrvRecordRequest {
     #[serde(serialize_with = "u32_as_string")]
@@ -504,6 +520,7 @@ pub struct SrvRecordRequest {
     pub ttl: u32,
 }
 
+/// Request body for [`DnsApi::destroy_record`].
 #[derive(Debug, Clone, Serialize)]
 pub struct DeleteRecordRequest {
     #[serde(serialize_with = "u32_as_string")]

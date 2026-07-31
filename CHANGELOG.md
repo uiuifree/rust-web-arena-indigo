@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.1 (unreleased)
 
 ### Added
 - API Key, Firewall, Snapshot and DNS APIs (all endpoints documented at

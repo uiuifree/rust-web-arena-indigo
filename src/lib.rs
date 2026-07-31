@@ -67,6 +67,8 @@ pub struct WebArenaIndigoApi {
 }
 
 impl WebArenaIndigoApi {
+    /// Creates a client from the client ID / secret issued in the Indigo
+    /// control panel.
     pub fn new<T: Into<String>, U: Into<String>>(
         client_id: T,
         client_secret: U,
@@ -120,6 +122,7 @@ impl WebArenaIndigoApi {
         Ok(&self.access_token)
     }
 
+    /// The access token currently held by the client (empty until issued).
     pub fn access_token(&self) -> &str {
         &self.access_token
     }
@@ -142,21 +145,27 @@ impl WebArenaIndigoApi {
         &self.throttle
     }
 
+    /// Instance (VM) APIs.
     pub fn instance(&self) -> InstanceApi<'_> {
         InstanceApi::new(self)
     }
+    /// SSH key APIs.
     pub fn ssh(&self) -> SshApi<'_> {
         SshApi::new(self)
     }
+    /// API key APIs.
     pub fn api_key(&self) -> ApiKeyApi<'_> {
         ApiKeyApi::new(self)
     }
+    /// Firewall APIs.
     pub fn firewall(&self) -> FirewallApi<'_> {
         FirewallApi::new(self)
     }
+    /// Snapshot APIs.
     pub fn snapshot(&self) -> SnapshotApi<'_> {
         SnapshotApi::new(self)
     }
+    /// DNS APIs.
     pub fn dns(&self) -> DnsApi<'_> {
         DnsApi::new(self)
     }
